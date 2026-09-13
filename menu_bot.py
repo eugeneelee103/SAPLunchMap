@@ -5,6 +5,7 @@ from pathlib import Path
 from email.utils import formatdate
 import requests
 from datetime import datetime
+import subprocess
 
 # ========== 설정 ==========
 STORE_IDX = 6848
@@ -147,5 +148,14 @@ if __name__ == "__main__":
         print(f"[!] API 오류: {api_data}")
         exit(1)
 
-    update_rss_feed(api_data)   # feed.xml 항상 생성
-    send_to_teams(api_data)     # Teams Webhook (URL 있을 때만)
+    update_rss_feed(api_data)
+    send_to_teams(api_data)
+
+    # feed.xml 자동 GitHub push
+    try:
+        subprocess.run(["git", "add", "feed.xml"], check=True)
+        subprocess.run(["git", "commit", "-m", f"메뉴 업데이트"], check=True)
+        subprocess.run(["git", "push"], check=True)
+        print("[OK] GitHub push 완료")
+    except subprocess.CalledProcessError:
+        print("[SKIP] 변경사항 없음")
