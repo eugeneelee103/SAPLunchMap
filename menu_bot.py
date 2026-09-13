@@ -59,7 +59,7 @@ def get_welstory_menu(restaurant_id, date):
         "User-Agent": "Mozilla/5.0",
         "Referer": "https://welplan.pmh.codes/",
     }
-    res = requests.get(url, headers=headers, timeout=10)
+    res = requests.get(url, headers=headers, timeout=30)
     res.raise_for_status()
     data = res.json()
     result = []
