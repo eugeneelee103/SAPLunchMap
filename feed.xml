@@ -1,24 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
   <channel>
-    <title>SAP Korea 구내식당 메뉴</title>
+    <title>SAP Korea 주변 구내식당 점심 메뉴</title>
     <link>https://front.cjfreshmeal.co.kr/menu/today</link>
-    <description>SAP Korea CJ 프레시밀 오늘의 메뉴</description>
+    <description>SAP Korea 주변 구내식당 점심 메뉴 모음</description>
     <language>ko</language>
-<item><title>2026년 09월 13일 🍽️ 구내식당 메뉴</title><description></description><link>https://front.cjfreshmeal.co.kr/menu/today</link><pubDate>Sun, 13 Sep 2026 09:25:19 -0000</pubDate><guid>202609131825</guid></item>
+<item><title>2026년 09월 13일 🍽️ 점심 메뉴</title><description>📍 교직원 공제회
+  (메뉴 정보 없음)
+
+📍 FKI 타워
+  (메뉴 정보 없음)
+
+📍 IFC 서울
+  (메뉴 정보 없음)
+</description><link>https://front.cjfreshmeal.co.kr/menu/today</link><pubDate>Sun, 13 Sep 2026 10:07:23 -0000</pubDate><guid>20260913</guid></item>
+    <item><title>2026년 09월 13일 🍽️ 구내식당 메뉴</title><description /><link>https://front.cjfreshmeal.co.kr/menu/today</link><pubDate>Sun, 13 Sep 2026 09:25:19 -0000</pubDate><guid>202609131825</guid></item>
+    
     <item><title>2026년 09월 13일 🍽️ 구내식당 메뉴</title><description /><link>https://front.cjfreshmeal.co.kr/menu/today</link><pubDate>Sun, 13 Sep 2026 09:15:13 -0000</pubDate><guid>202609131815</guid></item>
     
+    
     <item><title>2026년 09월 13일 🍽️ 구내식당 메뉴</title><description /><link>https://front.cjfreshmeal.co.kr/menu/today</link><pubDate>Sun, 13 Sep 2026 09:08:58 -0000</pubDate><guid>202609131808</guid></item>
+    
     
     
     <item><title>2026년 09월 13일 🍽️ 구내식당 메뉴</title><description /><link>https://front.cjfreshmeal.co.kr/menu/today</link><pubDate>Sun, 13 Sep 2026 09:04:40 -0000</pubDate><guid>202609131804</guid></item>
     
     
     
-    <item><title>2026년 09월 13일 구내식당 메뉴</title><description /><pubDate>Sun, 13 Sep 2026 08:45:31 -0000</pubDate><guid>20260913</guid></item>
-  
-  
-  
-  
+    
   </channel>
 </rss>
