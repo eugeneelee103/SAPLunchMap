@@ -60,7 +60,7 @@ def format_menu_html(api_data):
 def update_rss_feed(api_data):
     """feed.xml 생성 / 업데이트 (최근 7일치 유지)"""
     today        = datetime.now()
-    today_str    = today.strftime("%Y%m%d")
+    today_str    = today.strftime("%Y%m%d%H%M")  # 테스트용: 분단위 GUID
     today_label  = today.strftime("%Y년 %m월 %d일")
     pub_date     = formatdate(time.mktime(today.timetuple()), localtime=False)
 
