@@ -37,24 +37,25 @@ def get_today_menu():
     return res.json()
 
 
-def format_menu_html(api_data):
-    """RSS description용 HTML 포맷"""
+def format_menu_text(api_data):
+    """RSS description용 텍스트 포맷 (Teams FeedSummary 표시용)"""
     meal_data = api_data.get("data", {})
     lines = []
     for meal_cd in sorted(meal_data.keys()):
         items = meal_data[meal_cd]
         emoji = MEAL_EMOJI.get(meal_cd, "")
         label = MEAL_NAMES.get(meal_cd, f"식사{meal_cd}")
-        lines.append(f"<h3>{emoji} {label}</h3>")
+        lines.append(f"{emoji} {label}")
         for item in items:
             corner = item.get("corner") or ""
             name   = item.get("name")   or ""
             side   = item.get("side")   or ""
             kcal   = item.get("kcal")   or 0
-            lines.append(f"<p><strong>[{corner}] {name}</strong> ({kcal} kcal)</p>")
+            lines.append(f"  [{corner}] {name} ({kcal} kcal)")
             if side:
-                lines.append(f"<p><em>{side}</em></p>")
-    return "".join(lines)
+                lines.append(f"  {side}")
+        lines.append("")
+    return "\n".join(lines)
 
 
 def update_rss_feed(api_data):
@@ -78,11 +79,12 @@ def update_rss_feed(api_data):
         except Exception:
             pass
 
-    menu_html = format_menu_html(api_data)
+    menu_text = format_menu_text(api_data)
     new_item  = (
         f"<item>"
-        f"<title>{today_label} 구내식당 메뉴</title>"
-        f"<description><![CDATA[{menu_html}]]></description>"
+        f"<title>{today_label} 🍽️ 구내식당 메뉴</title>"
+        f"<description>{menu_text}</description>"
+        f"<link>{FEED_LINK}</link>"
         f"<pubDate>{pub_date}</pubDate>"
         f"<guid>{today_str}</guid>"
         f"</item>"
