@@ -1,0 +1,27 @@
+name: 구내식당 메뉴 알림
+
+on:
+  schedule:
+    - cron: "0 2 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  send-menu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests
+      - run: python menu_bot.py
+      - name: feed.xml 커밋 및 푸시
+        run: |
+          git config user.name "menu-bot"
+          git config user.email "menu-bot@github.com"
+          git add feed.xml
+          git diff --staged --quiet || git commit -m "🍽️ 메뉴 업데이트 $(date +%Y-%m-%d)"
+          git push
