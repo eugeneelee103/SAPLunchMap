@@ -8,25 +8,26 @@ from datetime import datetime
 import subprocess
 
 # ========== 설정 ==========
-STORE_IDX = 6848
 TEAMS_WEBHOOK_URL = os.environ.get("TEAMS_WEBHOOK_URL", "")
-# GitHub Actions Secret 또는 로컬에서: export TEAMS_WEBHOOK_URL="https://..."
 FEED_FILE  = "feed.xml"
-FEED_TITLE = "SAP Korea 구내식당 메뉴"
+FEED_TITLE = "SAP Korea 주변 구내식당 점심 메뉴"
 FEED_LINK  = "https://front.cjfreshmeal.co.kr/menu/today"
-FEED_DESC  = "SAP Korea CJ 프레시밀 오늘의 메뉴"
-MAX_ITEMS  = 7   # 최대 7일치 보관
+FEED_DESC  = "SAP Korea 주변 구내식당 점심 메뉴 모음"
+MAX_ITEMS  = 7
+
+STORES = [
+    {"name": "교직원 공제회",       "type": "cjfreshmeal", "id": 6848},
+    {"name": "FKI 타워",          "type": "cjfreshmeal", "id": 6083},
+    {"name": "IFC 서울",          "type": "welstory",    "id": "REST000100"},
+]
 # ==========================
 
-MEAL_NAMES = {"1": "조식", "2": "중식", "3": "석식"}
-MEAL_EMOJI = {"1": "🌅", "2": "🍱", "3": "🌙"}
 
-
-def get_today_menu():
-    today = "20260911"  # 테스트용: 평일 날짜 고정
+def get_cjfreshmeal_menu(store_id, date):
+    """CJ 프레시밀 점심 메뉴 조회 (mealCd=2)"""
     url = (
         "https://front.cjfreshmeal.co.kr/meal/v1/today-all-meal"
-        f"?storeIdx={STORE_IDX}&mealDt={today}&reqType=main"
+        f"?storeIdx={store_id}&mealDt={date}&reqType=main"
     )
     headers = {
         "User-Agent": "Mozilla/5.0",
@@ -34,38 +35,91 @@ def get_today_menu():
     }
     res = requests.get(url, headers=headers, timeout=10)
     res.raise_for_status()
-    return res.json()
+    data = res.json()
+    if data.get("status") != "success":
+        return []
+    result = []
+    for item in data.get("data", {}).get("2", []):  # "2" = 점심
+        result.append({
+            "name":   item.get("name")   or "",
+            "side":   item.get("side")   or "",
+            "kcal":   item.get("kcal")   or 0,
+            "corner": item.get("corner") or "",
+        })
+    return result
 
 
-def format_menu_text(api_data):
-    """RSS description용 텍스트 포맷 (Teams FeedSummary 표시용)"""
-    meal_data = api_data.get("data", {})
+def get_welstory_menu(restaurant_id, date):
+    """Welstory 점심 메뉴 조회 (mealTimeId=2)"""
+    url = (
+        "https://welplan.pmh.codes/api/menu/live"
+        f"?kind=gallery&date={date}&time=all&restaurantId={restaurant_id}"
+    )
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Referer": "https://welplan.pmh.codes/",
+    }
+    res = requests.get(url, headers=headers, timeout=10)
+    res.raise_for_status()
+    data = res.json()
+    result = []
+    for item in data.get("menus", []):
+        if str(item.get("mealTimeId")) != "2":  # "2" = 점심
+            continue
+        components = item.get("components", [])
+        side = ", ".join(c["name"] for c in components if not c.get("isMain"))
+        result.append({
+            "name":   item.get("name") or "",
+            "side":   side,
+            "kcal":   item.get("nutrition", {}).get("calories") or 0,
+            "corner": "",
+        })
+    return result
+
+
+def fetch_all_menus(date):
+    """모든 식당 점심 메뉴 수집"""
+    all_menus = []
+    for store in STORES:
+        try:
+            if store["type"] == "cjfreshmeal":
+                items = get_cjfreshmeal_menu(store["id"], date)
+            elif store["type"] == "welstory":
+                items = get_welstory_menu(store["id"], date)
+            else:
+                items = []
+            print(f"[OK] {store['name']} 메뉴 {len(items)}개 수집")
+        except Exception as e:
+            print(f"[ERROR] {store['name']}: {e}")
+            items = []
+        all_menus.append({"name": store["name"], "items": items})
+    return all_menus
+
+
+def format_all_menus(all_menus):
+    """모든 식당 메뉴 텍스트 포맷"""
     lines = []
-    for meal_cd in sorted(meal_data.keys()):
-        items = meal_data[meal_cd]
-        emoji = MEAL_EMOJI.get(meal_cd, "")
-        label = MEAL_NAMES.get(meal_cd, f"식사{meal_cd}")
-        lines.append(f"{emoji} {label}")
-        for item in items:
-            corner = item.get("corner") or ""
-            name   = item.get("name")   or ""
-            side   = item.get("side")   or ""
-            kcal   = item.get("kcal")   or 0
-            lines.append(f"  [{corner}] {name} ({kcal} kcal)")
-            if side:
-                lines.append(f"  {side}")
+    for store in all_menus:
+        lines.append(f"📍 {store['name']}")
+        if not store["items"]:
+            lines.append("  (메뉴 정보 없음)")
+        else:
+            for item in store["items"]:
+                corner = f"[{item['corner']}] " if item["corner"] else ""
+                lines.append(f"  {corner}{item['name']} ({item['kcal']} kcal)")
+                if item["side"]:
+                    lines.append(f"  {item['side']}")
         lines.append("")
     return "\n".join(lines)
 
 
-def update_rss_feed(api_data):
+def update_rss_feed(all_menus):
     """feed.xml 생성 / 업데이트 (최근 7일치 유지)"""
     today        = datetime.now()
-    today_str    = today.strftime("%Y%m%d%H%M")  # 테스트용: 분단위 GUID
+    today_str    = today.strftime("%Y%m%d")
     today_label  = today.strftime("%Y년 %m월 %d일")
     pub_date     = formatdate(time.mktime(today.timetuple()), localtime=False)
 
-    # 기존 항목 읽기 (오늘 것은 덮어씀)
     old_items = []
     if Path(FEED_FILE).exists():
         try:
@@ -79,10 +133,10 @@ def update_rss_feed(api_data):
         except Exception:
             pass
 
-    menu_text = format_menu_text(api_data)
+    menu_text = format_all_menus(all_menus)
     new_item  = (
         f"<item>"
-        f"<title>{today_label} 🍽️ 구내식당 메뉴</title>"
+        f"<title>{today_label} 🍽️ 점심 메뉴</title>"
         f"<description>{menu_text}</description>"
         f"<link>{FEED_LINK}</link>"
         f"<pubDate>{pub_date}</pubDate>"
@@ -110,31 +164,16 @@ def update_rss_feed(api_data):
     print(f"[OK] feed.xml 업데이트 완료 ({today_label})")
 
 
-def send_to_teams(api_data):
+def send_to_teams(all_menus):
     """Teams Webhook 전송 (URL 없으면 건너뜀)"""
     if not TEAMS_WEBHOOK_URL:
         print("[SKIP] TEAMS_WEBHOOK_URL 없음 - Teams 전송 건너뜀")
         return
-    meal_data = api_data.get("data", {})
-    today     = datetime.now().strftime("%Y년 %m월 %d일")
-    lines     = [f"## 🍽️ {today} 구내식당 오늘의 메뉴", "**SAP Korea · CJ 프레시밀**", ""]
-    for meal_cd in sorted(meal_data.keys()):
-        items = meal_data[meal_cd]
-        emoji = MEAL_EMOJI.get(meal_cd, "")
-        label = MEAL_NAMES.get(meal_cd, f"식사{meal_cd}")
-        lines.append(f"### {emoji} {label}")
-        for item in items:
-            corner = item.get("corner") or ""
-            name   = item.get("name")   or ""
-            side   = item.get("side")   or ""
-            kcal   = item.get("kcal")   or 0
-            lines.append(f"**[{corner}] {name}** ({kcal} kcal)")
-            if side:
-                lines.append(f"> {side}")
-        lines.append("")
+    today = datetime.now().strftime("%Y년 %m월 %d일")
+    text  = f"## 🍽️ {today} 점심 메뉴\n\n" + format_all_menus(all_menus)
     res = requests.post(
         TEAMS_WEBHOOK_URL,
-        json={"text": "\n".join(lines)},
+        json={"text": text},
         headers={"Content-Type": "application/json"},
         timeout=10,
     )
@@ -143,20 +182,17 @@ def send_to_teams(api_data):
 
 
 if __name__ == "__main__":
-    print("메뉴 불러오는 중...")
-    api_data = get_today_menu()
+    today = datetime.now().strftime("%Y%m%d")
+    print(f"점심 메뉴 수집 중... ({today})")
 
-    if api_data.get("status") != "success":
-        print(f"[!] API 오류: {api_data}")
-        exit(1)
-
-    update_rss_feed(api_data)
-    send_to_teams(api_data)
+    all_menus = fetch_all_menus(today)
+    update_rss_feed(all_menus)
+    send_to_teams(all_menus)
 
     # feed.xml 자동 GitHub push
     try:
         subprocess.run(["git", "add", "feed.xml"], check=True)
-        subprocess.run(["git", "commit", "-m", f"메뉴 업데이트"], check=True)
+        subprocess.run(["git", "commit", "-m", f"메뉴 업데이트 {today}"], check=True)
         subprocess.run(["git", "push"], check=True)
         print("[OK] GitHub push 완료")
     except subprocess.CalledProcessError:
