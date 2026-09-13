@@ -23,7 +23,7 @@ MEAL_EMOJI = {"1": "🌅", "2": "🍱", "3": "🌙"}
 
 
 def get_today_menu():
-    today = datetime.now().strftime("%Y%m%d")
+    today = "20260911"  # 테스트용: 평일 날짜 고정
     url = (
         "https://front.cjfreshmeal.co.kr/meal/v1/today-all-meal"
         f"?storeIdx={STORE_IDX}&mealDt={today}&reqType=main"
