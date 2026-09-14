@@ -11,7 +11,7 @@ import subprocess
 TEAMS_WEBHOOK_URL = os.environ.get("TEAMS_WEBHOOK_URL", "")
 FEED_FILE  = "feed.xml"
 FEED_TITLE = "SAP Korea 주변 구내식당 점심 메뉴"
-FEED_LINK  = "https://front.cjfreshmeal.co.kr/menu/today"
+FEED_LINK  = "https://welplan.pmh.codes/restaurants/welstory/REST000100/ifc%EC%84%9C%EC%9A%B8"
 FEED_DESC  = "SAP Korea 주변 구내식당 점심 메뉴 모음"
 MAX_ITEMS  = 7
 
@@ -50,7 +50,7 @@ def get_cjfreshmeal_menu(store_id, date):
 
 
 def get_welstory_menu(restaurant_id, date):
-    """Welstory 점심 메뉴 조회 (mealTimeId=2)"""
+    """Welstory 점심 메뉴 조회 (mealTimeId=2) - 최대 3회 재시도"""
     url = (
         "https://welplan.pmh.codes/api/menu/live"
         f"?kind=gallery&date={date}&time=all&restaurantId={restaurant_id}"
@@ -59,22 +59,30 @@ def get_welstory_menu(restaurant_id, date):
         "User-Agent": "Mozilla/5.0",
         "Referer": "https://welplan.pmh.codes/",
     }
-    res = requests.get(url, headers=headers, timeout=60)
-    res.raise_for_status()
-    data = res.json()
-    result = []
-    for item in data.get("menus", []):
-        if str(item.get("mealTimeId")) != "2":  # "2" = 점심
-            continue
-        components = item.get("components", [])
-        side = ", ".join(c["name"] for c in components if not c.get("isMain"))
-        result.append({
-            "name":   item.get("name") or "",
-            "side":   side,
-            "kcal":   item.get("nutrition", {}).get("calories") or 0,
-            "corner": "",
-        })
-    return result
+    for attempt in range(3):
+        try:
+            res = requests.get(url, headers=headers, timeout=60)
+            res.raise_for_status()
+            data = res.json()
+            result = []
+            for item in data.get("menus", []):
+                if str(item.get("mealTimeId")) != "2":
+                    continue
+                components = item.get("components", [])
+                side = ", ".join(c["name"] for c in components if not c.get("isMain"))
+                result.append({
+                    "name":   item.get("name") or "",
+                    "side":   side,
+                    "kcal":   item.get("nutrition", {}).get("calories") or 0,
+                    "corner": "",
+                })
+            return result
+        except Exception as e:
+            print(f"[RETRY {attempt+1}/3] IFC 서울: {e}")
+            if attempt < 2:
+                import time
+                time.sleep(3)
+    return []
 
 
 def fetch_all_menus(date):
