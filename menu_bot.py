@@ -59,30 +59,26 @@ def get_welstory_menu(restaurant_id, date):
         "User-Agent": "Mozilla/5.0",
         "Referer": "https://welplan.pmh.codes/",
     }
-    for attempt in range(3):
-        try:
-            res = requests.get(url, headers=headers, timeout=60)
-            res.raise_for_status()
-            data = res.json()
-            result = []
-            for item in data.get("menus", []):
-                if str(item.get("mealTimeId")) != "2":
-                    continue
-                components = item.get("components", [])
-                side = ", ".join(c["name"] for c in components if not c.get("isMain"))
-                result.append({
-                    "name":   item.get("name") or "",
-                    "side":   side,
-                    "kcal":   item.get("nutrition", {}).get("calories") or 0,
-                    "corner": "",
-                })
-            return result
-        except Exception as e:
-            print(f"[RETRY {attempt+1}/3] IFC 서울: {e}")
-            if attempt < 2:
-                import time
-                time.sleep(3)
-    return []
+    try:
+        res = requests.get(url, headers=headers, timeout=60)
+        res.raise_for_status()
+        data = res.json()
+        result = []
+        for item in data.get("menus", []):
+            if str(item.get("mealTimeId")) != "2":
+                continue
+            components = item.get("components", [])
+            side = ", ".join(c["name"] for c in components if not c.get("isMain"))
+            result.append({
+                "name":   item.get("name") or "",
+                "side":   side,
+                "kcal":   item.get("nutrition", {}).get("calories") or 0,
+                "corner": "",
+            })
+        return result
+    except Exception as e:
+        print(f"[ERROR] IFC 서울: {e}")
+        return []
 
 
 def fetch_all_menus(date):
