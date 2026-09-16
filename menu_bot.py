@@ -114,7 +114,7 @@ def format_all_menus(all_menus):
         else:
             for item in store["items"]:
                 corner = f"[{item['corner']}] " if item["corner"] else ""
-                lines.append(f"  {corner}{item['name']} ({item['kcal']} kcal)")
+                lines.append(f"  {corner}{item['name']}")
                 if item["side"]:
                     lines.append(f"  {item['side']}")
         lines.append("")
