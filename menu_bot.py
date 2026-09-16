@@ -124,7 +124,7 @@ def format_all_menus(all_menus):
 def update_rss_feed(all_menus):
     """feed.xml 생성 / 업데이트 (최근 7일치 유지)"""
     today        = datetime.now()
-    today_str    = today.strftime("%Y%m%d")
+    today_str    = today.strftime("%Y%m%d%H%M")  # 분 단위 GUID (매 실행마다 새 항목)
     today_label  = today.strftime("%Y년 %m월 %d일")
     pub_date     = formatdate(time.mktime(today.timetuple()), localtime=False)
 
