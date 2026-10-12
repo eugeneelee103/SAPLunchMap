@@ -158,6 +158,7 @@ def update_rss_feed(all_menus):
         f'    <link>{FEED_LINK}</link>\n'
         f'    <description>{FEED_DESC}</description>\n'
         '    <language>ko</language>\n'
+        f'    <lastBuildDate>{pub_date}</lastBuildDate>\n'
         + "\n    ".join(all_items) +
         '\n  </channel>\n'
         '</rss>'
