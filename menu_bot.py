@@ -5,6 +5,7 @@ from pathlib import Path
 from email.utils import formatdate
 import requests
 from datetime import datetime
+import subprocess
 
 # ========== 설정 ==========
 TEAMS_WEBHOOK_URL = os.environ.get("TEAMS_WEBHOOK_URL", "")
@@ -15,9 +16,9 @@ FEED_DESC  = "SAP Korea 주변 구내식당 점심 메뉴 모음"
 MAX_ITEMS  = 7
 
 STORES = [
-    {"name": "교직원 공제회",  "type": "cjfreshmeal", "id": 6848},
-    {"name": "FKI 타워",      "type": "cjfreshmeal", "id": 6083},
-    {"name": "IFC 서울",      "type": "welstory",    "id": "REST000100"},
+    {"name": "교직원 공제회",       "type": "cjfreshmeal", "id": 6848},
+    {"name": "FKI 타워",          "type": "cjfreshmeal", "id": 6083},
+    {"name": "IFC 서울",          "type": "welstory",    "id": "REST000100"},
 ]
 # ==========================
 
@@ -33,9 +34,11 @@ def get_cjfreshmeal_menu(store_id, date):
         "Referer": "https://front.cjfreshmeal.co.kr/",
     }
     res = requests.get(url, headers=headers, timeout=10)
+    print(f"  [DEBUG] CJ FreshMeal HTTP {res.status_code}")
     res.raise_for_status()
     data = res.json()
     if data.get("status") != "success":
+        print(f"  [DEBUG] CJ FreshMeal 응답: status={data.get('status')}, keys={list(data.keys())}")
         return []
     result = []
     for item in data.get("data", {}).get("2", []):  # "2" = 점심
@@ -49,7 +52,7 @@ def get_cjfreshmeal_menu(store_id, date):
 
 
 def get_welstory_menu(restaurant_id, date):
-    """Welstory 점심 메뉴 조회 (mealTimeId=2)"""
+    """Welstory 점심 메뉴 조회 (mealTimeId=2) - 최대 3회 재시도"""
     url = (
         "https://welplan.pmh.codes/api/menu/live"
         f"?kind=gallery&date={date}&time=all&restaurantId={restaurant_id}"
@@ -118,10 +121,10 @@ def format_all_menus(all_menus):
 
 def update_rss_feed(all_menus):
     """feed.xml 생성 / 업데이트 (최근 7일치 유지)"""
-    today       = datetime.now()
-    today_str   = today.strftime("%Y%m%d")       # 날짜 단위 GUID (당일 중복 방지)
-    today_label = today.strftime("%Y년 %m월 %d일")
-    pub_date    = formatdate(time.mktime(today.timetuple()), localtime=False)
+    today        = datetime.now()
+    today_str    = today.strftime("%Y%m%d%H%M")  # 분 단위 GUID (매 실행마다 새 항목)
+    today_label  = today.strftime("%Y년 %m월 %d일")
+    pub_date     = formatdate(time.mktime(today.timetuple()), localtime=False)
 
     old_items = []
     if Path(FEED_FILE).exists():
@@ -192,3 +195,12 @@ if __name__ == "__main__":
     all_menus = fetch_all_menus(today)
     update_rss_feed(all_menus)
     send_to_teams(all_menus)
+
+    # feed.xml 자동 GitHub push
+    try:
+        subprocess.run(["git", "add", "feed.xml"], check=True)
+        subprocess.run(["git", "commit", "-m", f"메뉴 업데이트 {today}"], check=True)
+        subprocess.run(["git", "push"], check=True)
+        print("[OK] GitHub push 완료")
+    except subprocess.CalledProcessError:
+        print("[SKIP] 변경사항 없음")
