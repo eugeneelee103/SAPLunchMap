@@ -196,11 +196,3 @@ if __name__ == "__main__":
     update_rss_feed(all_menus)
     send_to_teams(all_menus)
 
-    # feed.xml 자동 GitHub push
-    try:
-        subprocess.run(["git", "add", "feed.xml"], check=True)
-        subprocess.run(["git", "commit", "-m", f"메뉴 업데이트 {today}"], check=True)
-        subprocess.run(["git", "push"], check=True)
-        print("[OK] GitHub push 완료")
-    except subprocess.CalledProcessError:
-        print("[SKIP] 변경사항 없음")
