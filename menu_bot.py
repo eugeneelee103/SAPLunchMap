@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -102,6 +103,11 @@ def fetch_all_menus(date):
     return all_menus
 
 
+def strip_origin(text):
+    """원산지 표기 제거: (우육:호주산), (돈육:국내산) 등"""
+    return re.sub(r'\s*\([^)]*:[^)]*\)', '', text).strip()
+
+
 def format_all_menus(all_menus):
     """모든 식당 메뉴 텍스트 포맷"""
     lines = []
@@ -112,9 +118,11 @@ def format_all_menus(all_menus):
         else:
             for item in store["items"]:
                 corner = f"[{item['corner']}] " if item["corner"] else ""
-                lines.append(f"  {corner}{item['name']}")
+                name = strip_origin(item['name'])
+                lines.append(f"  {corner}{name}")
                 if item["side"]:
-                    lines.append(f"  {item['side']}")
+                    side = strip_origin(item['side'])
+                    lines.append(f"  {side}")
         lines.append("")
     return "\n".join(lines)
 
