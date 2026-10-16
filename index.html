@@ -232,10 +232,19 @@
       margin-bottom: 4px;
     }
     .info-card--kt .info-card-body a {
+      display: block;
+      text-align: center;
+      padding: 10px 22px;
+      margin: 0 0 6px;
+      border-radius: 10px;
+      background: #FFEBEE;
       color: #C62828;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.15s;
     }
     .info-card--kt .info-card-body a:hover {
-      text-decoration: underline;
+      background: #FFCDD2;
     }
     .info-card-body .hint {
       font-size: 0.8rem;
@@ -258,17 +267,11 @@
     </div>
   </div>
 
-  <div style="text-align:center">
-    <button class="refresh-btn" onclick="loadMenu()">
-      ↻ 새로고침
-    </button>
-  </div>
-
   <!-- 하단 정보 카드 -->
   <div class="info-grid">
     <div class="info-card info-card--hana">
       <div class="info-card-header">
-        <h3>🏦 하나증권</h3>
+        <h3>📍 하나증권</h3>
       </div>
       <div class="info-card-body">
         mealcare 앱 → 하나증권 여의도점 검색
@@ -276,13 +279,19 @@
     </div>
     <div class="info-card info-card--kt">
       <div class="info-card-header">
-        <h3>📡 KT</h3>
+        <h3>📍 KT</h3>
       </div>
       <div class="info-card-body">
         <a href="http://pf.kakao.com/_bwyrs" target="_blank" rel="noopener">🔗 카카오톡 채널 바로가기</a>
-        <div class="hint">(KT그룹희망나눔재단 여의도점 카카오톡 채널 검색)</div>
+        <div class="hint">(KT그룹희망나눔재단 여의도점 카카오톡 채널 → 주간식단표 확인)</div>
       </div>
     </div>
+  </div>
+
+  <div style="text-align:center; margin-top:28px;">
+    <button class="refresh-btn" onclick="loadMenu()">
+      ↻ 새로고침
+    </button>
   </div>
 
   <footer id="lastUpdated"></footer>
