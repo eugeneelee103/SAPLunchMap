@@ -182,6 +182,66 @@
     .card:nth-child(3) .card-link:hover {
       background: #FFCCBC;
     }
+
+    /* ── 하단 정보 카드 ── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      max-width: 980px;
+      margin: 20px auto 0;
+    }
+    @media (max-width: 560px) {
+      .info-grid { grid-template-columns: 1fr; }
+    }
+    .info-card {
+      background: #ffffff;
+      border-radius: 18px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+      overflow: hidden;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+    .info-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 24px rgba(0,0,0,0.11);
+    }
+    .info-card-header {
+      padding: 14px 22px;
+    }
+    .info-card-header h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+    .info-card--hana .info-card-header {
+      background: linear-gradient(135deg, #00796B, #26A69A);
+    }
+    .info-card--kt .info-card-header {
+      background: linear-gradient(135deg, #C62828, #EF5350);
+    }
+    .info-card-body {
+      padding: 14px 22px 18px;
+      font-size: 0.88rem;
+      color: #3a4a5e;
+      line-height: 1.6;
+    }
+    .info-card-body a {
+      display: inline-block;
+      font-weight: 600;
+      text-decoration: none;
+      margin-bottom: 4px;
+    }
+    .info-card--kt .info-card-body a {
+      color: #C62828;
+    }
+    .info-card--kt .info-card-body a:hover {
+      text-decoration: underline;
+    }
+    .info-card-body .hint {
+      font-size: 0.8rem;
+      color: #8a96a8;
+      margin-top: 4px;
+    }
   </style>
 </head>
 <body>
@@ -202,6 +262,27 @@
     <button class="refresh-btn" onclick="loadMenu()">
       ↻ 새로고침
     </button>
+  </div>
+
+  <!-- 하단 정보 카드 -->
+  <div class="info-grid">
+    <div class="info-card info-card--hana">
+      <div class="info-card-header">
+        <h3>🏦 하나증권</h3>
+      </div>
+      <div class="info-card-body">
+        mealcare 앱 → 하나증권 여의도점 검색
+      </div>
+    </div>
+    <div class="info-card info-card--kt">
+      <div class="info-card-header">
+        <h3>📡 KT</h3>
+      </div>
+      <div class="info-card-body">
+        <a href="http://pf.kakao.com/_bwyrs" target="_blank" rel="noopener">🔗 카카오톡 채널 바로가기</a>
+        <div class="hint">(KT그룹희망나눔재단 여의도점 카카오톡 채널 검색)</div>
+      </div>
+    </div>
   </div>
 
   <footer id="lastUpdated"></footer>
