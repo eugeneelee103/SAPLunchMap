@@ -2,8 +2,6 @@ name: 구내식당 메뉴 알림
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '55 13 * * 1-5'
 
 permissions:
   contents: write
