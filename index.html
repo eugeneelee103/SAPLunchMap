@@ -188,7 +188,8 @@
   <footer id="lastUpdated"></footer>
 
   <script>
-    const FEED_URL = 'https://raw.githubusercontent.com/eugeneelee103/SAPLunchMap/main/feed.xml';
+    // GitHub API를 사용하면 CDN 캐시 우회 가능 (raw.githubusercontent.com은 캐시 지연 있음)
+    const API_URL = 'https://api.github.com/repos/eugeneelee103/SAPLunchMap/contents/feed.xml';
 
     async function loadMenu() {
       const app = document.getElementById('app');
@@ -196,8 +197,11 @@
       app.innerHTML = '<div class="state"><div class="spinner"></div>메뉴를 불러오는 중입니다…</div>';
 
       try {
-        // 캐시 방지를 위해 timestamp 파라미터 추가
-        const res = await fetch(`${FEED_URL}?t=${Date.now()}`);
+        // Accept: application/vnd.github.v3.raw → 파일 원본 직접 반환, 항상 최신
+        const res = await fetch(API_URL, {
+          headers: { 'Accept': 'application/vnd.github.v3.raw' },
+          cache: 'no-store'
+        });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const xmlText = await res.text();
 
