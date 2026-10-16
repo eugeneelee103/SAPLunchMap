@@ -1,6 +1,7 @@
 import os
 import re
 import time
+import html
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from email.utils import formatdate
@@ -150,8 +151,8 @@ def update_rss_feed(all_menus):
     menu_text = format_all_menus(all_menus)
     new_item  = (
         f"<item>"
-        f"<title>{today_label} 🍽️ 점심 메뉴</title>"
-        f"<description>{menu_text}</description>"
+        f"<title>{html.escape(today_label)} 🍽️ 점심 메뉴</title>"
+        f"<description>{html.escape(menu_text)}</description>"
         f"<link>{FEED_LINK}</link>"
         f"<pubDate>{pub_date}</pubDate>"
         f"<guid>{today_str}</guid>"
