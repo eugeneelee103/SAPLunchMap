@@ -163,6 +163,25 @@
     .refresh-btn:hover { background: #1565C0; }
 
     .no-menu { color: #b0bac8; font-size: 0.88rem; padding: 12px 0; }
+
+    .card-link {
+      display: block;
+      text-align: center;
+      padding: 10px 22px;
+      margin: 4px 22px 16px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .card:nth-child(3) .card-link {
+      background: #FBE9E7;
+      color: #BF360C;
+    }
+    .card:nth-child(3) .card-link:hover {
+      background: #FFCCBC;
+    }
   </style>
 </head>
 <body>
@@ -275,6 +294,10 @@
     }
 
     /* ── 카드 렌더 ── */
+    const RESTAURANT_LINKS = {
+      'IFC 서울': 'https://welplan.pmh.codes/restaurants/welstory/REST000100/ifc%EC%84%9C%EC%9A%B8'
+    };
+
     function renderCard(restaurant) {
       const itemsHTML = restaurant.items.length
         ? restaurant.items.map(it => `
@@ -285,12 +308,18 @@
             </div>`).join('')
         : '<p class="no-menu">메뉴 정보 없음</p>';
 
+      const link = RESTAURANT_LINKS[restaurant.name];
+      const linkHTML = link
+        ? `<a class="card-link" href="${link}" target="_blank" rel="noopener">🔗 식단표 바로가기</a>`
+        : '';
+
       return `
         <div class="card">
           <div class="card-header">
             <h2>📍 ${restaurant.name}</h2>
           </div>
           <div class="card-body">${itemsHTML}</div>
+          ${linkHTML}
         </div>`;
     }
 
