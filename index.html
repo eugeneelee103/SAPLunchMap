@@ -251,6 +251,26 @@
       color: #8a96a8;
       margin-top: 4px;
     }
+    .hana-menu-item {
+      padding: 8px 0;
+      border-bottom: 1px solid #f2f4f7;
+    }
+    .hana-menu-item:last-child { border-bottom: none; }
+    .hana-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 9px;
+      border-radius: 12px;
+      margin-bottom: 4px;
+      background: #E0F2F1;
+      color: #00695C;
+    }
+    .hana-sides {
+      font-size: 0.8rem;
+      color: #8a96a8;
+      line-height: 1.5;
+    }
   </style>
 </head>
 <body>
@@ -273,8 +293,8 @@
       <div class="info-card-header">
         <h3>📍 하나증권</h3>
       </div>
-      <div class="info-card-body">
-        mealcare 앱 → 하나증권 여의도점 검색
+      <div class="info-card-body" id="hana-menu-body">
+        <p class="hana-sides">불러오는 중…</p>
       </div>
     </div>
     <div class="info-card info-card--kt">
@@ -289,7 +309,7 @@
   </div>
 
   <div style="text-align:center; margin-top:28px;">
-    <button class="refresh-btn" onclick="loadMenu()">
+    <button class="refresh-btn" onclick="loadMenu(); loadHanaMenu();">
       ↻ 새로고침
     </button>
   </div>
@@ -424,8 +444,46 @@
       } catch { return str; }
     }
 
+    /* ── 하나증권 메뉴 로더 ── */
+    const HANA_API_URL = 'https://api.github.com/repos/eugeneelee103/SAPLunchMap/contents/hana_menu.json';
+
+    async function loadHanaMenu() {
+      const body = document.getElementById('hana-menu-body');
+      try {
+        const res = await fetch(HANA_API_URL, {
+          headers: { 'Accept': 'application/vnd.github.v3.raw' },
+          cache: 'no-store'
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        // 오늘 날짜를 "M/DD" 형식으로 변환 (예: 10/20)
+        const today = new Date();
+        const todayKey = `${today.getMonth() + 1}/${String(today.getDate()).padStart(2, '0')}`;
+
+        const todayMenu = data.menus.find(m => m.date === todayKey);
+
+        if (todayMenu) {
+          body.innerHTML = `
+            <div class="hana-menu-item">
+              <span class="hana-badge">A</span>
+              <div class="hana-sides">${todayMenu.A}</div>
+            </div>
+            <div class="hana-menu-item">
+              <span class="hana-badge">B</span>
+              <div class="hana-sides">${todayMenu.B}</div>
+            </div>`;
+        } else {
+          body.innerHTML = '<p class="hana-sides">오늘 메뉴 정보가 없습니다.</p>';
+        }
+      } catch (e) {
+        body.innerHTML = '<p class="hana-sides">메뉴를 불러오지 못했습니다.</p>';
+      }
+    }
+
     // 최초 로드
     loadMenu();
+    loadHanaMenu();
   </script>
 </body>
 </html>
