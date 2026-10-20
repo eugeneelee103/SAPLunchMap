@@ -78,7 +78,7 @@
     /* 식당별 헤더 색상 */
     .card:nth-child(1) .card-header { background: linear-gradient(135deg, #1976D2, #42A5F5); }
     .card:nth-child(2) .card-header { background: linear-gradient(135deg, #388E3C, #66BB6A); }
-    .card:nth-child(3) .card-header { background: linear-gradient(135deg, #E64A19, #FF7043); }
+    .card:nth-child(3) .card-header { background: linear-gradient(135deg, #00796B, #26A69A); }
 
     .card-body {
       padding: 6px 22px 18px;
@@ -103,7 +103,7 @@
     }
     .card:nth-child(1) .corner-badge { background: #E3F2FD; color: #1565C0; }
     .card:nth-child(2) .corner-badge { background: #E8F5E9; color: #2E7D32; }
-    .card:nth-child(3) .corner-badge { background: #FBE9E7; color: #BF360C; }
+    .card:nth-child(3) .corner-badge { background: #E0F2F1; color: #00695C; }
 
     .menu-name {
       font-size: 0.97rem;
@@ -175,14 +175,6 @@
       text-decoration: none;
       transition: background 0.15s;
     }
-    .card:nth-child(3) .card-link {
-      background: #FBE9E7;
-      color: #BF360C;
-    }
-    .card:nth-child(3) .card-link:hover {
-      background: #FFCCBC;
-    }
-
     /* ── 하단 정보 카드 ── */
     .info-grid {
       display: grid;
@@ -213,9 +205,23 @@
       font-weight: 700;
       color: #ffffff;
     }
-    .info-card--hana .info-card-header {
-      background: linear-gradient(135deg, #00796B, #26A69A);
+    .info-card--ifc .info-card-header {
+      background: linear-gradient(135deg, #E64A19, #FF7043);
     }
+    .info-card--ifc .card-link {
+      display: block;
+      text-align: center;
+      padding: 10px 22px;
+      margin: 4px 22px 16px;
+      border-radius: 10px;
+      background: #FBE9E7;
+      color: #BF360C;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .info-card--ifc .card-link:hover { background: #FFCCBC; }
     .info-card--kt .info-card-header {
       background: linear-gradient(135deg, #C62828, #EF5350);
     }
@@ -289,13 +295,14 @@
 
   <!-- 하단 정보 카드 -->
   <div class="info-grid">
-    <div class="info-card info-card--hana">
+    <div class="info-card info-card--ifc">
       <div class="info-card-header">
-        <h3>📍 하나증권</h3>
+        <h3>📍 IFC 서울</h3>
       </div>
-      <div class="info-card-body" id="hana-menu-body">
+      <div class="info-card-body" id="ifc-bottom-body">
         <p class="hana-sides">불러오는 중…</p>
       </div>
+      <a class="card-link" href="https://welplan.pmh.codes/restaurants/welstory/REST000100/ifc%EC%84%9C%EC%9A%B8" target="_blank" rel="noopener">🔗 식단표 바로가기</a>
     </div>
     <div class="info-card info-card--kt">
       <div class="info-card-header">
@@ -309,7 +316,7 @@
   </div>
 
   <div style="text-align:center; margin-top:28px;">
-    <button class="refresh-btn" onclick="loadMenu(); loadHanaMenu();">
+    <button class="refresh-btn" onclick="loadAll();">
       ↻ 새로고침
     </button>
   </div>
@@ -317,52 +324,49 @@
   <footer id="lastUpdated"></footer>
 
   <script>
-    // GitHub API를 사용하면 CDN 캐시 우회 가능 (raw.githubusercontent.com은 캐시 지연 있음)
-    const API_URL = 'https://api.github.com/repos/eugeneelee103/SAPLunchMap/contents/feed.xml';
+    const API_URL      = 'https://api.github.com/repos/eugeneelee103/SAPLunchMap/contents/feed.xml';
+    const HANA_API_URL = 'https://api.github.com/repos/eugeneelee103/SAPLunchMap/contents/hana_menu.json';
 
-    async function loadMenu() {
+    async function loadAll() {
       const app = document.getElementById('app');
       document.getElementById('dateBadge').textContent = '불러오는 중…';
       app.innerHTML = '<div class="state"><div class="spinner"></div>메뉴를 불러오는 중입니다…</div>';
 
-      try {
-        // Accept: application/vnd.github.v3.raw → 파일 원본 직접 반환, 항상 최신
-        const res = await fetch(API_URL, {
-          headers: { 'Accept': 'application/vnd.github.v3.raw' },
-          cache: 'no-store'
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const xmlText = await res.text();
+      const [feedRes, hanaRes] = await Promise.allSettled([
+        fetch(API_URL,      { headers: { 'Accept': 'application/vnd.github.v3.raw' }, cache: 'no-store' }).then(r => r.ok ? r.text() : Promise.reject(new Error(`HTTP ${r.status}`))),
+        fetch(HANA_API_URL, { headers: { 'Accept': 'application/vnd.github.v3.raw' }, cache: 'no-store' }).then(r => r.ok ? r.json() : Promise.reject())
+      ]);
 
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(xmlText, 'text/xml');
-        const item = xml.querySelector('item');
-        if (!item) throw new Error('메뉴 항목을 찾을 수 없습니다.');
-
-        const title       = item.querySelector('title')?.textContent ?? '';
-        const description = item.querySelector('description')?.textContent ?? '';
-        const pubDate     = item.querySelector('pubDate')?.textContent ?? '';
-
-        // 날짜 뱃지 업데이트
-        const dateLabel = title.replace(/\s*🍽️?\s*/g, '').replace('점심 메뉴', '').trim();
-        document.getElementById('dateBadge').textContent = dateLabel + ' 점심';
-
-        // last updated
-        document.getElementById('lastUpdated').textContent =
-          pubDate ? `최종 업데이트: ${formatDate(pubDate)}` : '';
-
-        const restaurants = parseDescription(description);
-
-        if (restaurants.length === 0) {
-          app.innerHTML = '<div class="state">오늘 메뉴 정보가 없습니다.</div>';
+      // feed.xml 파싱 → 교직원 공제회, FKI 타워 (상단) + IFC 서울 (하단)
+      let topRestaurants = [], ifcData = null;
+      if (feedRes.status === 'fulfilled') {
+        try {
+          const parser = new DOMParser();
+          const xml    = parser.parseFromString(feedRes.value, 'text/xml');
+          const item   = xml.querySelector('item');
+          if (item) {
+            const title       = item.querySelector('title')?.textContent ?? '';
+            const description = item.querySelector('description')?.textContent ?? '';
+            const pubDate     = item.querySelector('pubDate')?.textContent ?? '';
+            const dateLabel   = title.replace(/\s*🍽️?\s*/g, '').replace('점심 메뉴', '').trim();
+            document.getElementById('dateBadge').textContent    = dateLabel + ' 점심';
+            document.getElementById('lastUpdated').textContent  = pubDate ? `최종 업데이트: ${formatDate(pubDate)}` : '';
+            const restaurants = parseDescription(description);
+            topRestaurants    = restaurants.filter(r => r.name !== 'IFC 서울');
+            ifcData           = restaurants.find(r => r.name === 'IFC 서울') || null;
+          }
+        } catch(e) {
+          app.innerHTML = `<div class="state">메뉴를 불러오지 못했습니다.<br><small>${e.message}</small></div>`;
           return;
         }
-
-        app.innerHTML = `<div class="grid">${restaurants.map(renderCard).join('')}</div>`;
-
-      } catch (err) {
-        app.innerHTML = `<div class="state">메뉴를 불러오지 못했습니다.<br><small>${err.message}</small></div>`;
       }
+
+      // 상단 그리드: 교직원 공제회, FKI 타워 + 하나증권
+      const hanaData = hanaRes.status === 'fulfilled' ? hanaRes.value : null;
+      app.innerHTML  = `<div class="grid">${topRestaurants.map(renderCard).join('')}${renderHanaTopCard(hanaData)}</div>`;
+
+      // 하단 IFC 서울 카드 업데이트
+      updateIfcBottomCard(ifcData);
     }
 
     /* ── 파서 ── */
@@ -403,11 +407,7 @@
       });
     }
 
-    /* ── 카드 렌더 ── */
-    const RESTAURANT_LINKS = {
-      'IFC 서울': 'https://welplan.pmh.codes/restaurants/welstory/REST000100/ifc%EC%84%9C%EC%9A%B8'
-    };
-
+    /* ── 상단 카드 렌더 (교직원 공제회, FKI 타워) ── */
     function renderCard(restaurant) {
       const itemsHTML = restaurant.items.length
         ? restaurant.items.map(it => `
@@ -417,20 +417,41 @@
               ${it.sides ? `<div class="menu-sides">${it.sides}</div>` : ''}
             </div>`).join('')
         : '<p class="no-menu">메뉴 정보 없음</p>';
-
-      const link = RESTAURANT_LINKS[restaurant.name];
-      const linkHTML = link
-        ? `<a class="card-link" href="${link}" target="_blank" rel="noopener">🔗 식단표 바로가기</a>`
-        : '';
-
       return `
         <div class="card">
-          <div class="card-header">
-            <h2>📍 ${restaurant.name}</h2>
-          </div>
+          <div class="card-header"><h2>📍 ${restaurant.name}</h2></div>
           <div class="card-body">${itemsHTML}</div>
-          ${linkHTML}
         </div>`;
+    }
+
+    /* ── 하나증권 상단 카드 렌더 (3번째) ── */
+    function renderHanaTopCard(hanaData) {
+      let menuHTML = '<p class="no-menu">메뉴를 불러오지 못했습니다.</p>';
+      if (hanaData) {
+        const today    = new Date();
+        const todayKey = `${today.getMonth() + 1}/${String(today.getDate()).padStart(2, '0')}`;
+        const todayMenu = hanaData.menus?.find(m => m.date === todayKey);
+        menuHTML = todayMenu
+          ? `<div class="menu-item"><span class="corner-badge">A</span><div class="menu-sides">${todayMenu.A}</div></div>
+             <div class="menu-item"><span class="corner-badge">B</span><div class="menu-sides">${todayMenu.B}</div></div>`
+          : '<p class="no-menu">오늘 메뉴 정보가 없습니다.</p>';
+      }
+      return `<div class="card"><div class="card-header"><h2>📍 하나증권</h2></div><div class="card-body">${menuHTML}</div></div>`;
+    }
+
+    /* ── IFC 서울 하단 카드 업데이트 ── */
+    function updateIfcBottomCard(ifcData) {
+      const body = document.getElementById('ifc-bottom-body');
+      if (!body) return;
+      if (!ifcData || !ifcData.items.length) {
+        body.innerHTML = '<p class="hana-sides">오늘 메뉴 정보가 없습니다.</p>';
+        return;
+      }
+      body.innerHTML = ifcData.items.map(it => `
+        <div class="hana-menu-item">
+          <div class="menu-name" style="font-size:0.92rem">${it.name || '–'}</div>
+          ${it.sides ? `<div class="hana-sides">${it.sides}</div>` : ''}
+        </div>`).join('');
     }
 
     /* ── pubDate 포맷 ── */
@@ -444,46 +465,10 @@
       } catch { return str; }
     }
 
-    /* ── 하나증권 메뉴 로더 ── */
-    const HANA_API_URL = 'https://api.github.com/repos/eugeneelee103/SAPLunchMap/contents/hana_menu.json';
 
-    async function loadHanaMenu() {
-      const body = document.getElementById('hana-menu-body');
-      try {
-        const res = await fetch(HANA_API_URL, {
-          headers: { 'Accept': 'application/vnd.github.v3.raw' },
-          cache: 'no-store'
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-
-        // 오늘 날짜를 "M/DD" 형식으로 변환 (예: 10/20)
-        const today = new Date();
-        const todayKey = `${today.getMonth() + 1}/${String(today.getDate()).padStart(2, '0')}`;
-
-        const todayMenu = data.menus.find(m => m.date === todayKey);
-
-        if (todayMenu) {
-          body.innerHTML = `
-            <div class="hana-menu-item">
-              <span class="hana-badge">A</span>
-              <div class="hana-sides">${todayMenu.A}</div>
-            </div>
-            <div class="hana-menu-item">
-              <span class="hana-badge">B</span>
-              <div class="hana-sides">${todayMenu.B}</div>
-            </div>`;
-        } else {
-          body.innerHTML = '<p class="hana-sides">오늘 메뉴 정보가 없습니다.</p>';
-        }
-      } catch (e) {
-        body.innerHTML = '<p class="hana-sides">메뉴를 불러오지 못했습니다.</p>';
-      }
-    }
 
     // 최초 로드
-    loadMenu();
-    loadHanaMenu();
+    loadAll();
   </script>
 </body>
 </html>
